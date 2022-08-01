@@ -1,27 +1,41 @@
 from asyncio.log import logger
-from flask import Flask, jsonify, request
+from pydoc import cli
+from time import monotonic
+from flask import Flask, flash, jsonify, request
 from flask_pymongo import PyMongo, ObjectId
+
+from flask_pymongo import pymongo
+
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config['MONGO_URI']='mongodb://127.0.0.1/Plantas_medicinalesDB'
-mongo = PyMongo(app)
+# app.config['MONGO_URI']='mongodb://127.0.0.1/Plantas_medicinalesDB'
+# mongo = PyMongo(app)
 
+CONNECTION = 'mongodb+srv://yoselin:123@cluster0.sfj6m.mongodb.net/test'
+
+client = pymongo.MongoClient(CONNECTION)
+mongo = client.get_database('Plantas_MedicinalesDB')
+
+db = mongo.Administrador
 
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
-#BASE DE DATOS
-db = mongo.db.Administrador
+# BASE DE DATOS
+# db = mongo.db.Administrador
 
-@app.route('/Administrador-login', methods=['POST']) #Vamos a tener una ruta para poder crear usuarios
+
+# Vamos a tener una ruta para poder crear usuarios
+@app.route('/Administrador-login', methods=['POST'])
 def validateUser():
-    
+    print(request.json)
     # if key doesn't exist, returns None
     email = request.json['email']
     contrasena = request.json['contrasena']
+
     result = db.find_one({"email": email})
     if result is None:
         return jsonify({"Error": "no autorizado"}), 401
@@ -29,13 +43,15 @@ def validateUser():
     if not check_password_hash(result['contrasena'], contrasena):
         return jsonify({"error": "contrasena incorrecta"}), 401
 
-    
+    response = jsonify({'email': email, 'constrasenaaaa': contrasena})
+    response.headers.add('Access-Control-Allow-Origin', '*')
     # if key doesn't exist, returns a 400, bad request error
-    return jsonify({'email': email, 'constrasenaaaa': contrasena}), 200
+    return response
     # return jsonify(contrasena)
 
 
-@app.route('/Administrador', methods=['POST']) #Vamos a tener una ruta para poder crear usuarios
+# Vamos a tener una ruta para poder crear usuarios
+@app.route('/Administrador', methods=['POST'])
 def createUsers():
     # print(json.loads(request.data))
     print(request.json)
@@ -44,16 +60,17 @@ def createUsers():
 
     id = db.insert_one(
         {'nombre': request.json['nombre'], 'email': request.json['email'], 'contrasena': encriptado})
-    
-    return jsonify(str(id.inserted_id)) #muestra el id de un usuario
+
+    return jsonify(str(id.inserted_id))  # muestra el id de un usuario
 
 
-@app.route('/Administrador', methods=['GET']) #Vamos a tener una ruta para obtener usuarios
+# Vamos a tener una ruta para obtener usuarios
+@app.route('/Administrador', methods=['GET'])
 def getUsers():
     Administrador = []
-    for doc in db.find():#vamos ir anadiendo por cada documento e la lista
+    for doc in db.find():  # vamos ir anadiendo por cada documento e la lista
         Administrador.append({
-            '_id': str(ObjectId(doc['_id'])), #nos va a mostrar el id en str
+            '_id': str(ObjectId(doc['_id'])),  # nos va a mostrar el id en str
             'nombre': doc['nombre'],
             'email': doc['email'],
             'contrasena': doc['contrasena']
@@ -62,10 +79,12 @@ def getUsers():
     return jsonify(Administrador)
 
 
-@app.route('/Administrado/<id>', methods=['GET']) #Vamos a tener una ruta para crear usuarios
+# Vamos a tener una ruta para crear usuarios
+@app.route('/Administrado/<id>', methods=['GET'])
 def getUser(id):
-    Administrado = db.find_one({'_id': ObjectId(id)})#va a retorar un administrador
-    #print(Administrado)
+    # va a retorar un administrador
+    Administrado = db.find_one({'_id': ObjectId(id)})
+    # print(Administrado)
     return jsonify({
         '_id': str(ObjectId(Administrado['_id'])),
         'nombre': Administrado['nombre'],
@@ -73,14 +92,18 @@ def getUser(id):
         'contrasena': Administrado['contrasena']
     })
 
-@app.route('/Administrador/<id>', methods=['DELETE']) #Vamos a tener una ruta para crear usuarios
+
+# Vamos a tener una ruta para crear usuarios
+@app.route('/Administrador/<id>', methods=['DELETE'])
 def deleteUsers(id):
     db.delete_one({'_id': ObjectId(id)})
     return jsonify({'msg': 'usuario eliminado'})
 
-@app.route('/Administrador/<id>', methods=['PUT']) #Vamos a tener una ruta para crear usuarios
+
+# Vamos a tener una ruta para crear usuarios
+@app.route('/Administrador/<id>', methods=['PUT'])
 def updateUsers(id):
-    db.update_one({'_id': ObjectId(id)}, {'$set':{
+    db.update_one({'_id': ObjectId(id)}, {'$set': {
         'nombre': request.json['nombre'],
         'email': request.json['email'],
         'contrasena': request.json['contrasena']
@@ -89,31 +112,36 @@ def updateUsers(id):
 
 
 ################################################################################################################
-#PLANTAS
+# PLANTAS
 
-db1 = mongo.db.Plantas_medicinales
+# db1 = mongo.db.Plantas_medicinales
+db1 = mongo.Plantas_medicinales
 
-@app.route('/Plantas_medicinales', methods=['POST']) #Vamos a tener una ruta para poder crear usuarios
+
+# Vamos a tener una ruta para poder crear usuarios
+@app.route('/Plantas_medicinales', methods=['POST'])
 def createPlantas_medicinales():
     print(request.json)
     id = db1.insert_one({
-            'nombre_cientifico': request.json['nombre_cientifico'],
-            'nombre_planta': request.json['nombre_planta'],
-            'propiedades': request.json['propiedades'],
-            'descripcion': request.json['descripcion'],
-            'conocimiento_ancestral': request.json['conocimiento_ancestral'],
-            'imagen': request.files['imagen'],
-            'latitud': request.json['latitud'],
-            'longitud': request.json['longitud']
-        })
-    return jsonify(str(id.inserted_id)) #muestra el id de un usuario
+        'nombre_cientifico': request.json['nombre_cientifico'],
+        'nombre_planta': request.json['nombre_planta'],
+        'propiedades': request.json['propiedades'],
+        'descripcion': request.json['descripcion'],
+        'conocimiento_ancestral': request.json['conocimiento_ancestral'],
+        'imagen': request.files['imagen'],
+        'latitud': request.json['latitud'],
+        'longitud': request.json['longitud']
+    })
+    return jsonify(str(id.inserted_id))  # muestra el id de un usuario
 
-@app.route('/Plantas_medicinales', methods=['GET']) #Vamos a tener una ruta para obtener usuarios
+
+# Vamos a tener una ruta para obtener usuarios
+@app.route('/Plantas_medicinales', methods=['GET'])
 def getPlantas_medicinales():
     Plantas_medicinales = []
-    for doc in db1.find():#vamos ir anadiendo por cada documento e la lista
+    for doc in db1.find():  # vamos ir anadiendo por cada documento e la lista
         Plantas_medicinales.append({
-            '_id': str(ObjectId(doc['_id'])), #nos va a mostrar el id en str
+            '_id': str(ObjectId(doc['_id'])),  # nos va a mostrar el id en str
             'nombre_cientifico': doc['nombre_cientifico'],
             'nombre_planta': doc['nombre_planta'],
             'propiedades': doc['propiedades'],
@@ -127,10 +155,12 @@ def getPlantas_medicinales():
     return jsonify(Plantas_medicinales)
 
 
-@app.route('/Plantas_medicinale/<id>', methods=['GET']) #Vamos a tener una ruta para crear usuarios
+# Vamos a tener una ruta para crear usuarios
+@app.route('/Plantas_medicinale/<id>', methods=['GET'])
 def getPlantas_medicinale(id):
-    Plantas_medicinale = db1.find_one({'_id': ObjectId(id)})#va a retorar un administrador
-    #print(Administrado)
+    # va a retorar un administrador
+    Plantas_medicinale = db1.find_one({'_id': ObjectId(id)})
+    # print(Administrado)
     return jsonify({
         '_id': str(ObjectId(Plantas_medicinale['_id'])),
         'nombre_cientifico': Plantas_medicinale['nombre_cientifico'],
@@ -145,25 +175,32 @@ def getPlantas_medicinale(id):
 
     })
 
-@app.route('/Plantas_medicinales/<id>', methods=['DELETE']) #Vamos a tener una ruta para crear usuarios
+
+# Vamos a tener una ruta para crear usuarios
+@app.route('/Plantas_medicinales/<id>', methods=['DELETE'])
 def deletePlantas_medicinales(id):
     db1.delete_one({'_id': ObjectId(id)})
     return jsonify({'msg': 'dato eliminado'})
 
-@app.route('/Plantas_medicinales/<id>', methods=['PUT']) #Vamos a tener una ruta para crear usuarios
+
+# Vamos a tener una ruta para crear usuarios
+@app.route('/Plantas_medicinales/<id>', methods=['PUT'])
 def updatePlantas_medicinales(id):
-    db1.update_one({'_id': ObjectId(id)}, {'$set':{
+    db1.update_one({'_id': ObjectId(id)}, {'$set': {
         'nombre_cientifico': request.json['nombre_cientifico'],
         'nombre_planta': request.json['nombre_planta'],
         'propiedades': request.json['propiedades'],
         'descripcion': request.json['descripcion'],
         'conocimiento_ancestral': request.json['conocimiento_ancestral'],
-        'imagen': request.files['imagen'],
+        # 'imagen': request.files['imagen'],
         'latitud': request.json['latitud'],
         'longitud': request.json['longitud']
 
     }})
-    return jsonify({'msg': 'dato actualizado'})
+    # return jsonify({'msg': 'dato actualizado'})
+    response = jsonify({'hola': 'hola'})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 if __name__ == "__main__":
