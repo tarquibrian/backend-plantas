@@ -203,10 +203,9 @@ def updatePlantas_medicinales(id):
         'propiedades': request.json['propiedades'],
         'descripcion': request.json['descripcion'],
         'conocimiento_ancestral': request.json['conocimiento_ancestral'],
-        # 'imagen': request.files['imagen'],
+        'imagen': request.json['imagen'],
         'latitud': request.json['latitud'],
         'longitud': request.json['longitud']
-
     }})
     # return jsonify({'msg': 'dato actualizado'})
     response = jsonify({'hola': 'hola'})

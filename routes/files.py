@@ -1,4 +1,4 @@
-from flask import Blueprint, request, send_from_directory
+from flask import Blueprint, jsonify, request, send_from_directory
 from os import getcwd, path, remove
 from responses.response_json import response_json
 
@@ -8,6 +8,7 @@ PATH_FILES = getcwd() + "/backend-plantas/files/"
 
 print("directorio: ", PATH_FILES)
 
+
 @routes_files.post("/upload")
 def upload_file():
     try:
@@ -16,7 +17,8 @@ def upload_file():
         return response_json("success")
     except FileNotFoundError:
         return response_json("Folder not found", 404)
-    
+
+
 @routes_files.route("/file/<string:name_file>")
 def get_image(name_file):
     return send_from_directory(PATH_FILES, path=name_file, as_attachment=False)
@@ -27,10 +29,14 @@ def download_image(name_file):
     return send_from_directory(PATH_FILES, path=name_file, as_attachment=True)
 
 
-@routes_files.delete('/delete')
-def delete_file():
-    filename = request.form['filename']
+@routes_files.delete('/delete/<string:imagen>')
+def delete_file(imagen):
+    # print(request.json)
+    # return jsonify(request.json)
 
+    # filename = request.json['imagen']
+
+    filename = imagen
     # CHECK IF EXISTS FILE
     if path.isfile(PATH_FILES + filename) == False:
         return response_json("File does not exist", 404)
