@@ -186,7 +186,6 @@ def getPlantas_medicinale(id):
         'longitud': Plantas_medicinale['longitud']
     })
 
-
 # Vamos a tener una ruta para crear usuarios
 @app.route('/Plantas_medicinales/<id>', methods=['DELETE'])
 def deletePlantas_medicinales(id):
